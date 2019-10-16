@@ -4,8 +4,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
+import Dexie from 'dexie'; // wrapper for IndexedDB
 import { Hero } from './hero';
 import { MessageService } from './message.service';
+import { OfflineService } from './../../offline.service';
 
 
 @Injectable({ providedIn: 'root' })
@@ -18,8 +20,15 @@ export class HeroService {
   };
 
   constructor(
+    // private readonly OfflineService,
+    private readonly offlineService: OfflineService,
     private http: HttpClient,
-    private messageService: MessageService) { }
+    private messageService: MessageService) {
+      // todo fill this out
+      this.createIndexedDatabase();
+      this.registerToEvents(offlineService);
+      this.listenToEvents(offlineService);
+    }
 
   /** GET heroes from the server */
   getHeroes (): Observable<Hero[]> {
@@ -69,6 +78,14 @@ export class HeroService {
 
   /** POST: add a new hero to the server */
   addHero (hero: Hero): Observable<Hero> {
+    console.log('addHero ' + this.offlineService.isOnline)
+    if (!this.offlineService.isOnline) {
+      console.log('adding hero to index db');
+      debugger;
+      console.log(hero.name);
+      hero.id = 1;
+      this.addToIndexedDb(hero);
+    }
     return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
       tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
       catchError(this.handleError<Hero>('addHero'))
@@ -118,4 +135,81 @@ export class HeroService {
   private log(message: string) {
     this.messageService.add(`HeroService: ${message}`);
   }
+
+  private registerToEvents(offlineService: OfflineService) {
+
+    offlineService.connectionChanged.subscribe(online => {
+
+      console.log(online);
+      if (online) {
+        console.log('went online');
+        console.log('sending all stored items');
+
+        //pass the items to the backend if the connetion is enabled
+        // todo redo this
+        // this.sendItemsFromIndexedDb();
+      } else {
+        console.log('went offline, storing in indexdb');
+      }
+    });
+
+  }
+
+  private listenToEvents(offlineService: OfflineService) {
+
+    offlineService.connectionChanged.subscribe(online => {
+
+      console.log('Listen to events ' + online);
+      if (online) {
+        console.log('went online');
+        console.log('sending all stored item ids');
+
+        //send _ids for bulk delete
+        // todo redo this
+        // this.sendItemsToDelete();
+
+      } else {
+        console.log('went offline, storing ids to delete later, in indexdb');
+      }
+    });
+  }
+
+  private db: any;
+
+  // ---------- create the indexedDB
+  private createIndexedDatabase(){
+
+    // Delete Old Existing DB
+    let db_name = "heroes_database"
+    //if (Dexie.exists(db_name))
+    //  Dexie.delete(db_name)
+
+    console.log('createing Hero Database');
+    this.db = new Dexie(db_name);
+    this.db.version(1).stores({
+      heroes: "++id,name"
+    });
+    this.db.open()
+      .then(() => console.log('opened hero database'))
+      .catch(function (err) {
+        console.error (err.stack || err);
+      });
+  }
+
+  // ---------- add hero to the indexedDB on offline mode
+  private async addToIndexedDb(hero: Hero) {
+
+    console.log('addToIndexedDb');
+
+    this.db.heroes.add({name: hero.name})
+      .then(async () => {
+        const allItems: any[] = await this.db["heroes"].toArray();
+        console.log('saved in DB, DB is now', allItems);
+      })
+      .catch(e => {
+        alert('Error: ' + (e.stack || e));
+      });
+
+    }
+
 }

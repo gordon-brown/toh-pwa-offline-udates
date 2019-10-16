@@ -28,6 +28,7 @@
     "@angular/upgrade": "^8.0.0",
     "angular-in-memory-web-api": "^0.9.0",
     "core-js": "^2.6.10",
+    "dexie": "^2.0.4",
     "rxjs": "^6.5.1",
     "zone.js": "~0.9.1"
   },
