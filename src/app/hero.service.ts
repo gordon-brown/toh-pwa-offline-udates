@@ -170,9 +170,9 @@ export class HeroService {
     let db_name = "heroes_database"
     this.db = new Dexie(db_name);
     this.db.version(1).stores({
-      heroes: "++id,name",
-      heroes_add: "id++,name",
-      heroes_update: "id,name",
+      heroes: "id,name",
+      heroes_add: "++id",
+      heroes_update: "id",
       heroes_delete: "id"
     });
 
@@ -211,7 +211,7 @@ export class HeroService {
   private InsertIntoHeroesTable(hero: Hero) {
     this.db.heroes.add({name: hero.name})
       .catch(e => {
-        alert('Error: ' + (e.stack || e));
+        console.error('Error: ' + (e.stack || e));
       });
     }
 
