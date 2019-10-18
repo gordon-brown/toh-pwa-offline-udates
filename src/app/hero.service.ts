@@ -77,14 +77,6 @@ export class HeroService {
   //////// Save methods //////////
 /** POST: add a new hero to the server */
   addHero (hero: Hero): Observable<Hero> {
-    console.log('addHero ' + this.offlineService.isOnline)
-    if (!this.offlineService.isOnline) {
-      console.log('adding hero to index db');
-      debugger;
-      console.log(hero.name);
-      hero.id = 1;
-      this.addToIndexedDb(hero);
-    }
     return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
       tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
       catchError(this.handleError<Hero>('addHero'))
@@ -179,24 +171,11 @@ export class HeroService {
     let db_name = "heroes_database"
     this.db = new Dexie(db_name);
     this.db.version(1).stores({
-      heroes: "++id,name"
+      heroes: "++id,name",
     });
 
     this.db.open()
       .then(() => console.log('opened database ' + db_name))
-      .catch(function (err) {
-        console.error (err.stack || err);
-      });
-
-    console.log('createing Hero Add DB');
-    let db_name_add = 'heroes_add'
-    this.db_add = new Dexie(db_name_add);
-    this.db_add.version(1).stores({
-      heroes: "++id,name"
-    });
-
-    this.db_add.open()
-      .then(() => console.log('opened database ' + db_name_add))
       .catch(function (err) {
         console.error (err.stack || err);
       });
