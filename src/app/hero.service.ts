@@ -13,6 +13,7 @@ import { OfflineService } from './../../offline.service';
 export class HeroService {
 
   private heroesUrl = 'api/heroes';  // URL to web api
+  private db: any;
 
   heroes: Hero[];
 
@@ -77,6 +78,10 @@ export class HeroService {
   //////// Save methods //////////
 /** POST: add a new hero to the server */
   addHero (hero: Hero): Observable<Hero> {
+    // get last id
+    var last_id = 1;
+    this.db.hero.orderBy('id').last().then(o => { last_id = o.id; });
+
     return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
       tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
       catchError(this.handleError<Hero>('addHero'))
@@ -161,57 +166,59 @@ export class HeroService {
     });
   }
 
-  private db: any;
-
   // ---------- create the hero database
   private createIndexedDatabase(){
 
     console.log('createing Hero DB');
-    let db_name = "heroes_database"
+    let db_name = "hero_database"
     this.db = new Dexie(db_name);
-    this.db.version(1).stores({
-      heroes: "id,name",
-      heroes_add: "++id",
-      heroes_update: "id",
-      heroes_delete: "id"
-    });
+    this.CreateTables();
 
     this.db.open()
       .then(() => {
         console.log('opened database ' + db_name)
-        this.InitializeTable();
+        this.InitializeTables();
       })
       .catch(function (err) {
         console.error (err.stack || err);
       });
 
-   }
+  }
 
 
-  private InitializeTable() {
+  private CreateTables() {
+    this.db.version(1).stores({
+      hero: "id,name",
+      hero_add: "id",
+      hero_update: "id",
+      hero_delete: "id"
+    });
+  }
+
+  private InitializeTables() {
     this.getHeroes().subscribe(h => {
       console.log('populate heroes DB');
       this.heroes = h;
       this.ClearTables();
       var i: number;
       for (i = 0; i < this.heroes.length; i++) {
-        this.InsertIntoHeroesTable(this.heroes[i]);
+        this.InsertIntoHeroTable(this.heroes[i]);
       }
     });
   }
 
   private ClearTables() {
-    this.db.heroes.clear();
-    this.db.heroes_add.clear();
-    this.db.heroes_update.clear();
-    this.db.heroes_delete.clear();
+    this.db.hero.clear();
+    this.db.hero_add.clear();
+    this.db.hero_update.clear();
+    this.db.hero_delete.clear();
   }
 
   // ---------- add hero to the indexedDB on offline mode
-  private InsertIntoHeroesTable(hero: Hero) {
-    this.db.heroes.add({name: hero.name})
+  private InsertIntoHeroTable(hero: Hero) {
+    this.db.hero.add({id: hero.id, name: hero.name})
       .catch(e => {
-        console.error('Error: ' + (e.stack || e));
+        console.error('Insert Into Heroes Error: ' + (e.stack || e));
       });
     }
 
