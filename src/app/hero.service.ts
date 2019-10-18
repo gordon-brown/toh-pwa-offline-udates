@@ -9,22 +9,22 @@ import { Hero } from './hero';
 import { MessageService } from './message.service';
 import { OfflineService } from './../../offline.service';
 
-
 @Injectable({ providedIn: 'root' })
 export class HeroService {
 
   private heroesUrl = 'api/heroes';  // URL to web api
+
+  heroes: Hero[];
 
   httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
   };
 
   constructor(
-    // private readonly OfflineService,
     private readonly offlineService: OfflineService,
     private http: HttpClient,
-    private messageService: MessageService) {
-      // todo fill this out
+    private messageService: MessageService)
+    {
       this.createIndexedDatabase();
       this.registerToEvents(offlineService);
       this.listenToEvents(offlineService);
@@ -75,8 +75,7 @@ export class HeroService {
   }
 
   //////// Save methods //////////
-
-  /** POST: add a new hero to the server */
+/** POST: add a new hero to the server */
   addHero (hero: Hero): Observable<Hero> {
     console.log('addHero ' + this.offlineService.isOnline)
     if (!this.offlineService.isOnline) {
@@ -137,9 +136,7 @@ export class HeroService {
   }
 
   private registerToEvents(offlineService: OfflineService) {
-
     offlineService.connectionChanged.subscribe(online => {
-
       console.log(online);
       if (online) {
         console.log('went online');
@@ -152,13 +149,11 @@ export class HeroService {
         console.log('went offline, storing in indexdb');
       }
     });
-
   }
 
   private listenToEvents(offlineService: OfflineService) {
 
     offlineService.connectionChanged.subscribe(online => {
-
       console.log('Listen to events ' + online);
       if (online) {
         console.log('went online');
@@ -175,41 +170,56 @@ export class HeroService {
   }
 
   private db: any;
+  private db_add: any;
 
-  // ---------- create the indexedDB
+  // ---------- create the hero database
   private createIndexedDatabase(){
 
-    // Delete Old Existing DB
+    console.log('createing Hero DB');
     let db_name = "heroes_database"
-    //if (Dexie.exists(db_name))
-    //  Dexie.delete(db_name)
-
-    console.log('createing Hero Database');
     this.db = new Dexie(db_name);
     this.db.version(1).stores({
       heroes: "++id,name"
     });
+
     this.db.open()
-      .then(() => console.log('opened hero database'))
+      .then(() => console.log('opened database ' + db_name))
       .catch(function (err) {
         console.error (err.stack || err);
       });
-  }
+
+    console.log('createing Hero Add DB');
+    let db_name_add = 'heroes_add'
+    this.db_add = new Dexie(db_name_add);
+    this.db_add.version(1).stores({
+      heroes: "++id,name"
+    });
+
+    this.db_add.open()
+      .then(() => console.log('opened database ' + db_name_add))
+      .catch(function (err) {
+        console.error (err.stack || err);
+      });
+
+    this.getHeroes().subscribe(h => {
+      console.log('populate heroes DB');
+      this.heroes = h;
+      this.db.heroes.clear();
+      var i: number;
+      for (i=0; i<this.heroes.length; i++)
+      {
+        this.addToIndexedDb(this.heroes[i]);
+      }
+    });
+   }
+
 
   // ---------- add hero to the indexedDB on offline mode
-  private async addToIndexedDb(hero: Hero) {
-
-    console.log('addToIndexedDb');
-
+  private addToIndexedDb(hero: Hero) {
     this.db.heroes.add({name: hero.name})
-      .then(async () => {
-        const allItems: any[] = await this.db["heroes"].toArray();
-        console.log('saved in DB, DB is now', allItems);
-      })
       .catch(e => {
         alert('Error: ' + (e.stack || e));
       });
-
     }
 
 }
