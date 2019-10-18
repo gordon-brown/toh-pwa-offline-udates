@@ -162,7 +162,6 @@ export class HeroService {
   }
 
   private db: any;
-  private db_add: any;
 
   // ---------- create the hero database
   private createIndexedDatabase(){
@@ -172,29 +171,44 @@ export class HeroService {
     this.db = new Dexie(db_name);
     this.db.version(1).stores({
       heroes: "++id,name",
+      heroes_add: "id++,name",
+      heroes_update: "id,name",
+      heroes_delete: "id"
     });
 
     this.db.open()
-      .then(() => console.log('opened database ' + db_name))
+      .then(() => {
+        console.log('opened database ' + db_name)
+        this.InitializeTable();
+      })
       .catch(function (err) {
         console.error (err.stack || err);
       });
 
-    this.getHeroes().subscribe(h => {
-      console.log('populate heroes DB');
-      this.heroes = h;
-      this.db.heroes.clear();
-      var i: number;
-      for (i=0; i<this.heroes.length; i++)
-      {
-        this.addToIndexedDb(this.heroes[i]);
-      }
-    });
    }
 
 
+  private InitializeTable() {
+    this.getHeroes().subscribe(h => {
+      console.log('populate heroes DB');
+      this.heroes = h;
+      this.ClearTables();
+      var i: number;
+      for (i = 0; i < this.heroes.length; i++) {
+        this.InsertIntoHeroesTable(this.heroes[i]);
+      }
+    });
+  }
+
+  private ClearTables() {
+    this.db.heroes.clear();
+    this.db.heroes_add.clear();
+    this.db.heroes_update.clear();
+    this.db.heroes_delete.clear();
+  }
+
   // ---------- add hero to the indexedDB on offline mode
-  private addToIndexedDb(hero: Hero) {
+  private InsertIntoHeroesTable(hero: Hero) {
     this.db.heroes.add({name: hero.name})
       .catch(e => {
         alert('Error: ' + (e.stack || e));
