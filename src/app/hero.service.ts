@@ -78,14 +78,26 @@ export class HeroService {
   //////// Save methods //////////
 /** POST: add a new hero to the server */
   addHero (hero: Hero): Observable<Hero> {
-    // get last id
-    var last_id = 1;
-    this.db.hero.orderBy('id').last().then(o => { last_id = o.id; });
 
-    return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
-      tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
-      catchError(this.handleError<Hero>('addHero'))
-    );
+    this.AddToOfflineTables(hero);
+
+    return (this.offlineService.isOnline) ?
+      this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
+        tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
+        catchError(this.handleError<Hero>('addHero')))
+        :
+      of(hero)
+
+  }
+
+  private AddToOfflineTables(hero: Hero) {
+    this.db.hero.orderBy('id').last().then(o => {
+      hero.id = o.id + 1;
+      if (!this.offlineService.isOnline) {
+        this.InsertIntoHeroAddTable(hero);
+      }
+      this.InsertIntoHeroTable(hero);
+    });
   }
 
   /** DELETE: delete the hero from the server */
@@ -177,14 +189,13 @@ export class HeroService {
     this.db.open()
       .then(() => {
         console.log('opened database ' + db_name)
-        this.InitializeTables();
+        this.InitializeHeroTable();
       })
       .catch(function (err) {
         console.error (err.stack || err);
       });
 
   }
-
 
   private CreateTables() {
     this.db.version(1).stores({
@@ -195,7 +206,7 @@ export class HeroService {
     });
   }
 
-  private InitializeTables() {
+  private InitializeHeroTable() {
     this.getHeroes().subscribe(h => {
       console.log('populate heroes DB');
       this.heroes = h;
@@ -214,9 +225,18 @@ export class HeroService {
     this.db.hero_delete.clear();
   }
 
-  // ---------- add hero to the indexedDB on offline mode
   private InsertIntoHeroTable(hero: Hero) {
     this.db.hero.add({id: hero.id, name: hero.name})
+      .catch(e => {
+        console.error('Insert Into Heroes Error: ' + (e.stack || e));
+      });
+    }
+
+  private InsertIntoHeroAddTable(hero: Hero) {
+    this.db.hero_add.add({id: hero.id, name: hero.name})
+      .then(() => {
+        console.log('Added hero ' + hero.name);
+      })
       .catch(e => {
         console.error('Insert Into Heroes Error: ' + (e.stack || e));
       });
