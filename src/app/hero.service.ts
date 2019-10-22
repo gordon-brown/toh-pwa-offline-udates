@@ -33,11 +33,23 @@ export class HeroService {
 
   /** GET heroes from the server */
   getHeroes (): Observable<Hero[]> {
-    return this.http.get<Hero[]>(this.heroesUrl)
+    if (!this.offlineService.isOnline)
+    {
+      this.db.table("hero").toArray().then(h =>
+      {
+        return of(h).pipe(
+          tap(_ => console.log('return heroes from IndexDB')),
+          catchError(this.handleError<Hero[]>('getHeroes from IndexDB', []))
+          );
+      })
+    }
+    else {
+      return this.http.get<Hero[]>(this.heroesUrl)
       .pipe(
         tap(_ => this.log('fetched heroes')),
         catchError(this.handleError<Hero[]>('getHeroes', []))
       );
+    }
   }
 
   /** GET hero by id. Return `undefined` when id not found */
@@ -153,11 +165,14 @@ export class HeroService {
 
         //pass the items to the backend if the connetion is enabled
         // todo redo this
-        // this.sendItemsFromIndexedDb();
+        this.sendItemsFromIndexedDb();
       } else {
         console.log('went offline, storing in indexdb');
       }
     });
+  }
+  sendItemsFromIndexedDb() {
+    console.log('Register to Events. Online');
   }
 
   private listenToEvents(offlineService: OfflineService) {
@@ -170,18 +185,21 @@ export class HeroService {
 
         //send _ids for bulk delete
         // todo redo this
-        // this.sendItemsToDelete();
+        this.sendItemsToDelete();
 
       } else {
         console.log('went offline, storing ids to delete later, in indexdb');
       }
     });
   }
+  sendItemsToDelete() {
+   console.log('Listen to events. Online');
+  }
 
   // ---------- create the hero database
   private createIndexedDatabase(){
 
-    console.log('createing Hero DB');
+    console.log('creating Hero DB');
     let db_name = "hero_database"
     this.db = new Dexie(db_name);
     this.CreateTables();
