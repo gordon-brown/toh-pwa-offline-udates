@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
-import { Observable, of } from 'rxjs';
+import { Observable, of, from } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 import Dexie from 'dexie'; // wrapper for IndexedDB
 import { Hero } from './hero';
 import { MessageService } from './message.service';
-import { OfflineService } from './../../offline.service';
+import { OfflineService } from './offline.service';
 
 @Injectable({ providedIn: 'root' })
 export class HeroService {
@@ -35,13 +35,7 @@ export class HeroService {
   getHeroes (): Observable<Hero[]> {
     if (!this.offlineService.isOnline)
     {
-      this.db.table("hero").toArray().then(h =>
-      {
-        return of(h).pipe(
-          tap(_ => console.log('return heroes from IndexDB')),
-          catchError(this.handleError<Hero[]>('getHeroes from IndexDB', []))
-          );
-      })
+      return from(this.getHeroesFromDB());
     }
     else {
       return this.http.get<Hero[]>(this.heroesUrl)
@@ -50,6 +44,11 @@ export class HeroService {
         catchError(this.handleError<Hero[]>('getHeroes', []))
       );
     }
+  }
+
+  private async getHeroesFromDB(){
+    console.log('getting Heroes from Index DB');
+    return await this.db.hero.toArray();
   }
 
   /** GET hero by id. Return `undefined` when id not found */

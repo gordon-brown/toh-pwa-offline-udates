@@ -7,9 +7,10 @@
     "lint": "tslint ./src/**/*.ts -t verbose",
     "start": "ng serve",
     "test": "ng test",
-    "build": "ng build --prod",
+    "build": "ng build --prod --source-map",
     "e2e": "ng e2e",
-    "ng": "ng"
+    "ng": "ng",
+    "serve": "http-server dist --port 8080"
   },
   "keywords": [],
   "author": "",
