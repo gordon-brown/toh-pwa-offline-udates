@@ -28,7 +28,6 @@ export class HeroService {
     {
       this.createIndexedDatabase();
       this.registerToEvents(offlineService);
-      this.listenToEvents(offlineService);
     }
 
   /** GET heroes from the server */
@@ -92,13 +91,15 @@ export class HeroService {
 
     this.AddToOfflineTables(hero);
 
-    return (this.offlineService.isOnline) ?
-      this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
-        tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
-        catchError(this.handleError<Hero>('addHero')))
-        :
-      of(hero)
+    return this.AddHeroToDB(hero)
 
+  }
+
+  private AddHeroToDB(hero: Hero): Observable<Hero> {
+    return (this.offlineService.isOnline) ?
+      this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)), catchError(this.handleError<Hero>('addHero')))
+      :
+      of(hero);
   }
 
   private AddToOfflineTables(hero: Hero) {
@@ -170,29 +171,16 @@ export class HeroService {
       }
     });
   }
-  sendItemsFromIndexedDb() {
-    console.log('Register to Events. Online');
-  }
 
-  private listenToEvents(offlineService: OfflineService) {
+  async sendItemsFromIndexedDb() {
+    console.log('Inserting into db from hero_add');
 
-    offlineService.connectionChanged.subscribe(online => {
-      console.log('Listen to events ' + online);
-      if (online) {
-        console.log('went online');
-        console.log('sending all stored item ids');
+    var items = await this.db.hero_add.toArray();
+    items.forEach(h => {
+      this.AddHeroToDB(h);
+    })
 
-        //send _ids for bulk delete
-        // todo redo this
-        this.sendItemsToDelete();
-
-      } else {
-        console.log('went offline, storing ids to delete later, in indexdb');
-      }
-    });
-  }
-  sendItemsToDelete() {
-   console.log('Listen to events. Online');
+    this.db.hero_add.clear();
   }
 
   // ---------- create the hero database
