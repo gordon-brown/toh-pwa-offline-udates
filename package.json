@@ -5,12 +5,12 @@
   "description": "Example project from an angular.io guide.",
   "scripts": {
     "lint": "tslint ./src/**/*.ts -t verbose",
-    "start": "ng serve",
+    "start": "ng serve --port 8080",
     "test": "ng test",
     "build": "ng build --prod --source-map",
     "e2e": "ng e2e",
     "ng": "ng",
-    "serve": "http-server dist --port 8080"
+    "server": "http-server dist --port 8080"
   },
   "keywords": [],
   "author": "",

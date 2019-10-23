@@ -50,27 +50,35 @@ export class HeroService {
     return await this.db.hero.toArray();
   }
 
-  /** GET hero by id. Return `undefined` when id not found */
-  getHeroNo404<Data>(id: number): Observable<Hero> {
-    const url = `${this.heroesUrl}/?id=${id}`;
-    return this.http.get<Hero[]>(url)
-      .pipe(
-        map(heroes => heroes[0]), // returns a {0|1} element array
-        tap(h => {
-          const outcome = h ? `fetched` : `did not find`;
-          this.log(`${outcome} hero id=${id}`);
-        }),
-        catchError(this.handleError<Hero>(`getHero id=${id}`))
-      );
+  private async getHeroFromDB(id: number){
+    console.log('getting Hero from Index DB');
+    return await await this.db.hero
+      .where('id')
+      .equals(id)
+      .first(function(item) {
+        return item;
+    })
+  }
+
+  private async searchHeroesFromDB(searchTerm: string) {
+    console.log('getting Heroes from Index DB');
+    return await this.db.hero.where("name").startsWith(searchTerm).toArray();;
   }
 
   /** GET hero by id. Will 404 if id not found */
   getHero(id: number): Observable<Hero> {
-    const url = `${this.heroesUrl}/${id}`;
-    return this.http.get<Hero>(url).pipe(
-      tap(_ => this.log(`fetched hero id=${id}`)),
-      catchError(this.handleError<Hero>(`getHero id=${id}`))
-    );
+    if (!this.offlineService.isOnline)
+    {
+      return from(this.getHeroFromDB(id));
+    }
+    else
+    {
+      const url = `${this.heroesUrl}/${id}`;
+      return this.http.get<Hero>(url).pipe(
+        tap(_ => this.log(`fetched hero id=${id}`)),
+        catchError(this.handleError<Hero>(`getHero id=${id}`))
+      );
+    }
   }
 
   /* GET heroes whose name contains search term */
@@ -79,17 +87,23 @@ export class HeroService {
       // if not search term, return empty hero array.
       return of([]);
     }
-    return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
-      tap(_ => this.log(`found heroes matching "${term}"`)),
-      catchError(this.handleError<Hero[]>('searchHeroes', []))
-    );
+    if (!this.offlineService.isOnline)
+    {
+      return from(this.searchHeroesFromDB(term.trim()));
+    }
+    else {
+      return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
+        tap(_ => this.log(`found heroes matching "${term}"`)),
+        catchError(this.handleError<Hero[]>('searchHeroes', []))
+      );
+    }
   }
 
   //////// Save methods //////////
 /** POST: add a new hero to the server */
   addHero (hero: Hero): Observable<Hero> {
 
-    this.AddToOfflineTables(hero);
+    this.AddToHeroAddTable(hero);
 
     return this.AddHeroToDB(hero)
 
@@ -102,33 +116,66 @@ export class HeroService {
       of(hero);
   }
 
-  private AddToOfflineTables(hero: Hero) {
+  private AddToHeroAddTable(hero: Hero) {
     this.db.hero.orderBy('id').last().then(o => {
       hero.id = o.id + 1;
       if (!this.offlineService.isOnline) {
-        this.InsertIntoHeroAddTable(hero);
+        this.InsertIntoHeroTransactionTable(hero, 'hero_add');
       }
       this.InsertIntoHeroTable(hero);
     });
   }
 
-  /** DELETE: delete the hero from the server */
-  deleteHero (hero: Hero | number): Observable<Hero> {
-    const id = typeof hero === 'number' ? hero : hero.id;
-    const url = `${this.heroesUrl}/${id}`;
-
-    return this.http.delete<Hero>(url, this.httpOptions).pipe(
-      tap(_ => this.log(`deleted hero id=${id}`)),
-      catchError(this.handleError<Hero>('deleteHero'))
-    );
+  private AddToHeroUpdateTable(hero: Hero) {
+    if (!this.offlineService.isOnline) {
+      this.InsertIntoHeroTransactionTable(hero, 'hero_update');
+    }
+    this.UpdateFromHeroTable(hero);
   }
+
+  private AddToHeroDeleteTable(hero: Hero) {
+    if (!this.offlineService.isOnline) {
+      this.InsertIntoHeroTransactionTable(hero, 'hero_delete');
+    }
+    this.DeleteFromHeroTable(hero);
+  }
+
+  /** DELETE: delete the hero from the server */
+  deleteHero (hero: Hero): Observable<Hero> {
+
+    this.AddToHeroDeleteTable(hero);
+
+    return this.DeleteHeroFromDB(hero);
+  }
+
+  private DeleteHeroFromDB(hero: Hero): Observable<Hero> {
+
+    return (this.offlineService.isOnline) ?
+
+    this.http.delete<Hero>(`${this.heroesUrl}/${hero.id}`, this.httpOptions).pipe(
+        tap(_ => this.log(`deleted hero id=${hero.id}`)),
+        catchError(this.handleError<Hero>('deleteHero'))
+      )
+    :
+      of(hero);
+  }
+
+  private UpdateHeroFromDB(hero: Hero): Observable<Hero> {
+    return (this.offlineService.isOnline) ?
+        this.http.put(this.heroesUrl, hero, this.httpOptions).pipe(
+          tap(_ => this.log(`updated hero id=${hero.id}`)),
+          catchError(this.handleError<any>('updateHero'))
+        )
+      :
+        of(hero);
+  }
+
 
   /** PUT: update the hero on the server */
   updateHero (hero: Hero): Observable<any> {
-    return this.http.put(this.heroesUrl, hero, this.httpOptions).pipe(
-      tap(_ => this.log(`updated hero id=${hero.id}`)),
-      catchError(this.handleError<any>('updateHero'))
-    );
+    this.AddToHeroUpdateTable(hero);
+
+    return this.UpdateHeroFromDB(hero);
   }
 
   /**
@@ -181,6 +228,25 @@ export class HeroService {
     })
 
     this.db.hero_add.clear();
+
+    console.log('update from hero_update');
+
+    items = await this.db.hero_update.toArray();
+    items.forEach(h => {
+      this.UpdateHeroFromDB(h);
+    })
+
+    this.db.hero_update.clear();
+
+    console.log('deleting from hero_delete');
+
+    items = await this.db.hero_delete.toArray();
+    items.forEach(h => {
+      this.DeleteHeroFromDB(h);
+    })
+
+    this.db.hero_delete.clear();
+
   }
 
   // ---------- create the hero database
@@ -231,20 +297,34 @@ export class HeroService {
   }
 
   private InsertIntoHeroTable(hero: Hero) {
-    this.db.hero.add({id: hero.id, name: hero.name})
+    this.db.table('hero').add({id: hero.id, name: hero.name})
       .catch(e => {
         console.error('Insert Into Heroes Error: ' + (e.stack || e));
-      });
-    }
+    });
+  }
 
-  private InsertIntoHeroAddTable(hero: Hero) {
-    this.db.hero_add.add({id: hero.id, name: hero.name})
+  private UpdateFromHeroTable(hero: Hero) {
+    this.db.table('hero').update(hero.id, {name: hero.name})
+    .catch(e => {
+      console.error('Update Into Heroes Error: ' + (e.stack || e));
+    });
+  }
+
+  private DeleteFromHeroTable(hero: Hero) {
+    this.db.table('hero').where('id').equals(hero.id).delete()
+      .catch(e => {
+        console.error('Delete from Heroes Error: ' + (e.stack || e));
+    });
+  }
+
+  private InsertIntoHeroTransactionTable(hero: Hero, tableName: string) {
+    this.db.table(tableName).add({id: hero.id, name: hero.name})
       .then(() => {
-        console.log('Added hero ' + hero.name);
+        console.log('Table ' + tableName + ' ' + hero.name);
       })
       .catch(e => {
-        console.error('Insert Into Heroes Error: ' + (e.stack || e));
-      });
-    }
+        console.error('Insert Into ' + tableName + 'Error:' + (e.stack || e));
+    });
+  }
 
 }
