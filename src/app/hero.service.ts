@@ -205,7 +205,6 @@ export class HeroService {
 
   private registerToEvents(offlineService: OfflineService) {
     offlineService.connectionChanged.subscribe(online => {
-      console.log(online);
       if (online) {
         console.log('went online');
         console.log('sending all stored items');
