@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import Dexie from 'dexie'; // wrapper for IndexedDB
 import { Hero } from './hero';
@@ -30,6 +30,11 @@ export class IndexDbService {
 
   async searchHeroesFromDB(searchTerm: string) {
     console.log('getting Heroes from Index DB');
+
+    if (!searchTerm) {
+      return of([]);
+    }
+
     return await this.db.hero.where("name").startsWith(searchTerm).toArray();;
   }
 
