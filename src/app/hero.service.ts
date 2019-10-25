@@ -23,7 +23,7 @@ export class HeroService {
     return (this.offlineService.isOnline) ?
       this.DatabaseService.getHeroes()
     :
-      from(this.IndexDbService.getHeroesFromDB())
+      from(this.IndexDbService.getHeroes())
   }
 
   /** get hero by id */
@@ -31,7 +31,7 @@ export class HeroService {
     return (this.offlineService.isOnline) ?
       this.DatabaseService.getHero(id)
     :
-      from(this.IndexDbService.getHeroFromDB(id))
+      from(this.IndexDbService.getHero(id))
   }
 
   /* get heroes whose name contains search term */
@@ -46,7 +46,7 @@ export class HeroService {
   /** add a new hero */
   public addHero (hero: Hero): Observable<Hero> {
 
-    this.IndexDbService.AddToHeroAddTable(hero, this.offlineService.isOnline);
+    this.IndexDbService.AddHero(hero, this.offlineService.isOnline);
 
     return (this.offlineService.isOnline) ?
       this.DatabaseService.addHero(hero)
@@ -54,10 +54,21 @@ export class HeroService {
       of(hero);
   }
 
+  /** update the hero */
+  public updateHero (hero: Hero): Observable<any> {
+
+    this.IndexDbService.UpdateHero(hero, this.offlineService.isOnline);
+
+    return (this.offlineService.isOnline) ?
+      this.DatabaseService.updateHero(hero)
+    :
+      of(hero)
+  }
+
   /** delete the hero */
   public deleteHero (hero: Hero): Observable<Hero> {
 
-    this.IndexDbService.AddToHeroDeleteTable(hero, this.offlineService.isOnline);
+    this.IndexDbService.DeleteHero(hero, this.offlineService.isOnline);
 
     return (this.offlineService.isOnline) ?
       this.DatabaseService.deleteHero(hero)
@@ -65,16 +76,6 @@ export class HeroService {
       of(hero);
   }
 
-  /** update the hero */
-  public updateHero (hero: Hero): Observable<any> {
-
-    this.IndexDbService.AddToHeroUpdateTable(hero, this.offlineService.isOnline);
-
-    return (this.offlineService.isOnline) ?
-      this.DatabaseService.updateHero(hero)
-    :
-      of(hero)
-  }
 
   private registerToEvents(offlineService: OfflineService) {
     offlineService.connectionChanged.subscribe(online => {
@@ -94,7 +95,7 @@ export class HeroService {
     await this.IndexDbService.GetHeroTransctions('hero_add').then(heroes =>
       {
         heroes.forEach(hero => {
-          this.addHero(hero).subscribe(() => {
+          this.DatabaseService.addHero(hero).subscribe(() => {
             console.log('Added ' + JSON.stringify(hero));
             this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_add');
           });
@@ -105,7 +106,7 @@ export class HeroService {
     await this.IndexDbService.GetHeroTransctions('hero_update').then(heroes =>
       {
         heroes.forEach(hero => {
-          this.updateHero(hero).subscribe(() => {
+          this.DatabaseService.updateHero(hero).subscribe(() => {
             console.log('Updated ' + JSON.stringify(hero));
             this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_update');
           });
@@ -116,9 +117,9 @@ export class HeroService {
     await this.IndexDbService.GetHeroTransctions('hero_delete').then(heroes =>
       {
         heroes.forEach(hero => {
-          this.deleteHero(hero).subscribe(() => {
+          this.DatabaseService.deleteHero(hero).subscribe(() => {
             console.log('Deleted ' + JSON.stringify(hero));
-            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_update');
+            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_delete');
           });
         })
       }

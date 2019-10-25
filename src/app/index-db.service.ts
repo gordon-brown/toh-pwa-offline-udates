@@ -13,12 +13,12 @@ export class IndexDbService {
   constructor(
   ) {}
 
-  public async getHeroesFromDB(){
+  public async getHeroes(){
     console.log('getting Heroes from Index DB');
     return await this.db.hero.toArray();
   }
 
-  public async getHeroFromDB(id: number){
+  public async getHero(id: number){
     console.log('getting Hero from Index DB');
     return await await this.db.hero
       .where('id')
@@ -28,7 +28,7 @@ export class IndexDbService {
     })
   }
 
-  async searchHeroesFromDB(searchTerm: string) {
+  public async searchHeroesFromDB(searchTerm: string) {
     console.log('getting Heroes from Index DB');
 
     if (!searchTerm) {
@@ -36,6 +36,31 @@ export class IndexDbService {
     }
 
     return await this.db.hero.where("name").startsWith(searchTerm).toArray();;
+  }
+
+
+  public AddHero(hero: Hero, isOnline: boolean) {
+    this.db.hero.orderBy('id').last().then(o => {
+      if (!isOnline) {
+        hero.id = o.id + 1;
+        this.InsertIntoHeroTransactionTable(hero, 'hero_add');
+      }
+      this.InsertIntoHeroTable(hero);
+    });
+  }
+
+  public UpdateHero(hero: Hero, isOnline: boolean) {
+    if (!isOnline) {
+      this.InsertIntoHeroTransactionTable(hero, 'hero_update');
+    }
+    this.UpdateFromHeroTable(hero);
+  }
+
+  public DeleteHero(hero: Hero, isOnline: boolean) {
+    if (!isOnline) {
+      this.InsertIntoHeroTransactionTable(hero, 'hero_delete');
+    }
+    this.DeleteFromHeroTable(hero);
   }
 
   public InitializeIndexDB (heroes: Observable<Hero[]>) {
@@ -123,32 +148,8 @@ export class IndexDbService {
     });
   }
 
-  public AddToHeroAddTable(hero: Hero, isOnline: boolean) {
-    this.db.hero.orderBy('id').last().then(o => {
-      hero.id = o.id + 1;
-      if (!isOnline) {
-        this.InsertIntoHeroTransactionTable(hero, 'hero_add');
-      }
-      this.InsertIntoHeroTable(hero);
-    });
-  }
-
-  AddToHeroUpdateTable(hero: Hero, isOnline: boolean) {
-    if (!isOnline) {
-      this.InsertIntoHeroTransactionTable(hero, 'hero_update');
-    }
-    this.UpdateFromHeroTable(hero);
-  }
-
-  AddToHeroDeleteTable(hero: Hero, isOnline: boolean) {
-    if (!isOnline) {
-      this.InsertIntoHeroTransactionTable(hero, 'hero_delete');
-    }
-    this.DeleteFromHeroTable(hero);
-  }
-
-  async GetHeroTransctions(tableName: string) {
-    return await this.db.table[tableName].hero_add.toArray();
+  public async GetHeroTransctions(tableName: string) {
+    return await this.db.table(tableName).toArray();
   }
 
 }
