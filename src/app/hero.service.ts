@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, from } from 'rxjs';
 
 import { Hero } from './hero';
-import { DatabaseService } from './database.service';
+import { DatabaseService } from './in-memory-db.service';
 import { IndexDbService } from './index-db.service';
 import { OfflineService } from './offline.service';
 
@@ -18,24 +18,24 @@ export class HeroService {
       this.IndexDbService.InitializeIndexDB(this.getHeroes());
     }
 
-  /** GET heroes */
-  getHeroes (): Observable<Hero[]> {
+  /** get heroes */
+  public getHeroes (): Observable<Hero[]> {
     return (this.offlineService.isOnline) ?
       this.DatabaseService.getHeroes()
     :
       from(this.IndexDbService.getHeroesFromDB())
   }
 
-  /** GET hero by id */
-  getHero(id: number): Observable<Hero> {
+  /** get hero by id */
+  public getHero(id: number): Observable<Hero> {
     return (this.offlineService.isOnline) ?
       this.DatabaseService.getHero(id)
     :
       from(this.IndexDbService.getHeroFromDB(id))
   }
 
-  /* GET heroes whose name contains search term */
-  searchHeroes(term: string): Observable<Hero[]> {
+  /* get heroes whose name contains search term */
+  public searchHeroes(term: string): Observable<Hero[]> {
     return (this.offlineService.isOnline) ?
       this.DatabaseService.searchHeroes(term)
     :
@@ -43,8 +43,8 @@ export class HeroService {
   }
 
   //////// Save methods //////////
-  /** POST: add a new hero */
-  addHero (hero: Hero): Observable<Hero> {
+  /** add a new hero */
+  public addHero (hero: Hero): Observable<Hero> {
 
     this.IndexDbService.AddToHeroAddTable(hero, this.offlineService.isOnline);
 
@@ -54,8 +54,8 @@ export class HeroService {
       of(hero);
   }
 
-  /** DELETE: delete the hero */
-  deleteHero (hero: Hero): Observable<Hero> {
+  /** delete the hero */
+  public deleteHero (hero: Hero): Observable<Hero> {
 
     this.IndexDbService.AddToHeroDeleteTable(hero, this.offlineService.isOnline);
 
@@ -65,8 +65,8 @@ export class HeroService {
       of(hero);
   }
 
-  /** PUT: update the hero */
-  updateHero (hero: Hero): Observable<any> {
+  /** update the hero */
+  public updateHero (hero: Hero): Observable<any> {
 
     this.IndexDbService.AddToHeroUpdateTable(hero, this.offlineService.isOnline);
 
@@ -87,41 +87,42 @@ export class HeroService {
     });
   }
 
-  async sendItemsFromIndexedDb() {
+  private async sendItemsFromIndexedDb() {
 
     console.log('Sending items from IndexDB');
 
-    await this.IndexDbService.GetHeroesToAdd().then(heroes =>
+    await this.IndexDbService.GetHeroTransctions('hero_add').then(heroes =>
       {
         heroes.forEach(hero => {
-          this.addHero(hero).subscribe(() =>
-            console.log('Added ' + JSON.stringify(hero))
-          );
+          this.addHero(hero).subscribe(() => {
+            console.log('Added ' + JSON.stringify(hero));
+            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_add');
+          });
         })
       }
-     );
+    )
 
-    await this.IndexDbService.GetHeroesToUpdate().then(heroes =>
+    await this.IndexDbService.GetHeroTransctions('hero_update').then(heroes =>
       {
         heroes.forEach(hero => {
-          this.updateHero(hero).subscribe(() =>
-            console.log('Updated ' + JSON.stringify(hero))
-          );
+          this.updateHero(hero).subscribe(() => {
+            console.log('Updated ' + JSON.stringify(hero));
+            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_update');
+          });
        })
       }
      );
 
-    await this.IndexDbService.GetHeroesToDelete().then(heroes =>
+    await this.IndexDbService.GetHeroTransctions('hero_delete').then(heroes =>
       {
         heroes.forEach(hero => {
-          this.deleteHero(hero).subscribe(() =>
-            console.log('Deleted ' + JSON.stringify(hero))
-          );
+          this.deleteHero(hero).subscribe(() => {
+            console.log('Deleted ' + JSON.stringify(hero));
+            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_update');
+          });
         })
       }
      );
-
-    this.IndexDbService.ClearTables();
 
   }
 

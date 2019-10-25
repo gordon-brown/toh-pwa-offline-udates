@@ -13,12 +13,12 @@ export class IndexDbService {
   constructor(
   ) {}
 
-  async getHeroesFromDB(){
+  public async getHeroesFromDB(){
     console.log('getting Heroes from Index DB');
     return await this.db.hero.toArray();
   }
 
-  async getHeroFromDB(id: number){
+  public async getHeroFromDB(id: number){
     console.log('getting Hero from Index DB');
     return await await this.db.hero
       .where('id')
@@ -38,7 +38,7 @@ export class IndexDbService {
     return await this.db.hero.where("name").startsWith(searchTerm).toArray();;
   }
 
-  InitializeIndexDB (heroes: Observable<Hero[]>) {
+  public InitializeIndexDB (heroes: Observable<Hero[]>) {
 
     console.log('creating Hero DB');
     let db_name = "hero_database"
@@ -75,14 +75,14 @@ export class IndexDbService {
     });
   }
 
-  ClearTables() {
+  private ClearTables() {
     this.db.hero.clear();
     this.db.hero_add.clear();
     this.db.hero_update.clear();
     this.db.hero_delete.clear();
   }
 
-  InsertIntoHeroTable(hero: Hero) {
+  public InsertIntoHeroTable(hero: Hero) {
     this.db.table('hero').add({id: hero.id, name: hero.name})
       .catch(e => {
         console.error('Insert Into Heroes Error: ' + (e.stack || e));
@@ -113,7 +113,17 @@ export class IndexDbService {
     });
   }
 
-  AddToHeroAddTable(hero: Hero, isOnline: boolean) {
+  public DeleteFromHeroTransactionTable(hero: Hero, tableName: string) {
+    this.db.table(tableName).delete(hero.id)
+      .then(() => {
+        console.log('Deleted from Table ' + tableName + ' ' + hero.name);
+      })
+      .catch(e => {
+        console.error('Delete from ' + tableName + 'Error:' + (e.stack || e));
+    });
+  }
+
+  public AddToHeroAddTable(hero: Hero, isOnline: boolean) {
     this.db.hero.orderBy('id').last().then(o => {
       hero.id = o.id + 1;
       if (!isOnline) {
@@ -137,16 +147,8 @@ export class IndexDbService {
     this.DeleteFromHeroTable(hero);
   }
 
-  async GetHeroesToAdd() {
-    return await this.db.hero_add.toArray();
-  }
-
-  async GetHeroesToUpdate() {
-    return await this.db.hero_update.toArray();
-  }
-
-  async GetHeroesToDelete() {
-    return await this.db.hero_delete.toArray();
+  async GetHeroTransctions(tableName: string) {
+    return await this.db.table[tableName].hero_add.toArray();
   }
 
 }

@@ -81,8 +81,6 @@ export class DatabaseService {
         catchError(this.handleError<any>('updateHero')))
   }
 
-
-
   /**
    * Handle Http operation that failed.
    * Let the app continue.
