@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, from } from 'rxjs';
 
 import { Hero } from './hero';
-import { DatabaseService } from './in-memory-db.service';
+import { DataService } from './data.service';
 import { IndexDbService } from './index-db.service';
 import { OfflineService } from './offline.service';
 
@@ -12,7 +12,7 @@ export class HeroService {
   constructor(
     private readonly offlineService: OfflineService,
     private IndexDbService: IndexDbService,
-    private DatabaseService : DatabaseService)
+    private DatabaseService : DataService)
     {
       this.registerToEvents(offlineService);
       this.IndexDbService.InitializeIndexDB(this.getHeroes());

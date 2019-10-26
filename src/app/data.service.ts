@@ -10,9 +10,10 @@ import { MessageService } from './message.service';
 @Injectable({
   providedIn: 'root'
 })
-export class DatabaseService {
+export class DataService {
 
-  private heroesUrl = 'api/heroes';  // URL to web api
+  // private heroesUrl = 'api/heroes';  // for use with in--dataservice
+  private heroesUrl = 'http://localhost:5000/app/heroes';  // for REST api
 
   heroes: Hero[];
 
