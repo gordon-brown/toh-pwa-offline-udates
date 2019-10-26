@@ -11,67 +11,66 @@ export class HeroService {
 
   constructor(
     private readonly offlineService: OfflineService,
-    private IndexDbService: IndexDbService,
-    private DatabaseService : DataService)
-    {
+    private indexDbService: IndexDbService,
+    private databaseService: DataService) {
       this.registerToEvents(offlineService);
-      this.IndexDbService.InitializeIndexDB(this.getHeroes());
+      this.indexDbService.InitializeIndexDB(this.getHeroes());
     }
 
   /** get heroes */
-  public getHeroes (): Observable<Hero[]> {
+  public getHeroes(): Observable<Hero[]> {
     return (this.offlineService.isOnline) ?
-      this.DatabaseService.getHeroes()
+      this.databaseService.getHeroes()
     :
-      from(this.IndexDbService.getHeroes())
+      from(this.indexDbService.getHeroes());
   }
 
   /** get hero by id */
   public getHero(id: number): Observable<Hero> {
     return (this.offlineService.isOnline) ?
-      this.DatabaseService.getHero(id)
+      this.databaseService.getHero(id)
     :
-      from(this.IndexDbService.getHero(id))
+      from(this.indexDbService.getHero(id));
   }
 
   /* get heroes whose name contains search term */
   public searchHeroes(term: string): Observable<Hero[]> {
     return (this.offlineService.isOnline) ?
-      this.DatabaseService.searchHeroes(term)
+      this.databaseService.searchHeroes(term)
     :
-      from(this.IndexDbService.searchHeroesFromDB(term.trim()));
+      from(this.indexDbService.searchHeroesFromDB(term.trim()));
   }
 
   //////// Save methods //////////
   /** add a new hero */
-  public addHero (hero: Hero): Observable<Hero> {
+  public addHero(hero: Hero): Observable<Hero> {
 
-    this.IndexDbService.AddHero(hero, this.offlineService.isOnline);
+    this.indexDbService.AddHero(hero, this.offlineService.isOnline);
 
     return (this.offlineService.isOnline) ?
-      this.DatabaseService.addHero(hero)
+      this.databaseService.addHero(hero)
     :
       of(hero);
   }
 
   /** update the hero */
-  public updateHero (hero: Hero): Observable<any> {
+  public updateHero(hero: Hero): Observable<any> {
 
-    this.IndexDbService.UpdateHero(hero, this.offlineService.isOnline);
+    this.indexDbService.UpdateHero(hero, this.offlineService.isOnline);
 
     return (this.offlineService.isOnline) ?
-      this.DatabaseService.updateHero(hero)
+      this.databaseService.updateHero(hero)
     :
-      of(hero)
+      of(hero);
   }
 
   /** delete the hero */
-  public deleteHero (hero: Hero): Observable<Hero> {
+  public deleteHero(hero: Hero): Observable<Hero> {
 
-    this.IndexDbService.DeleteHero(hero, this.offlineService.isOnline);
+    this.indexDbService.DeleteHero(hero, this.offlineService.isOnline);
 
     return (this.offlineService.isOnline) ?
-      this.DatabaseService.deleteHero(hero)
+      this.databaseService.deleteHero(hero)
     :
       of(hero);
   }
@@ -91,27 +90,22 @@ export class HeroService {
 
     console.log('Sending items from IndexDB');
 
-    var transactions = await this.IndexDbService.GetHeroTransctions();
+    const transactions = await this.indexDbService.GetHeroTransctions();
     transactions.forEach(transaction => {
-      if (transaction.type === 'add'){
-        this.DatabaseService.addHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
+      if (transaction.type === 'add') {
+        this.databaseService.addHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
           console.log('Added ' + JSON.stringify(transaction));
         });
-      }
-      else if (transaction.type === 'update'){
-        this.DatabaseService.updateHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
+      } else if (transaction.type === 'update') {
+        this.databaseService.updateHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
           console.log('Updated ' + JSON.stringify(transaction));
         });
-      }
-      else if (transaction.type === 'delete') {
-        this.DatabaseService.deleteHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
+      } else if (transaction.type === 'delete') {
+        this.databaseService.deleteHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
           console.log('Deleted ' + JSON.stringify(transaction));
         });
       }
-      else {
-        throw "invalid transaction type in sendItemsFromIndexDb: " + transaction.type;
-      }
-      this.IndexDbService.DeleteFromHeroTransactionTable(transaction.id);
+      this.indexDbService.DeleteFromHeroTransactionTable(transaction.id);
     }
-  )}
+  ); }
 }

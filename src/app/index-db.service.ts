@@ -13,19 +13,19 @@ export class IndexDbService {
   constructor(
   ) {}
 
-  public async getHeroes(){
+  public async getHeroes() {
     console.log('getting Heroes from Index DB');
     return await this.db.hero.toArray();
   }
 
-  public async getHero(id: number){
+  public async getHero(id: number) {
     console.log('getting Hero from Index DB');
     return await await this.db.hero
       .where('id')
       .equals(id)
-      .first(function(item) {
+      .first(item => {
         return item;
-    })
+      });
   }
 
   public async searchHeroesFromDB(searchTerm: string) {
@@ -35,7 +35,7 @@ export class IndexDbService {
       return of([]);
     }
 
-    return await this.db.hero.where("name").startsWith(searchTerm).toArray();;
+    return await this.db.hero.where('name').startsWith(searchTerm).toArray();
   }
 
 
@@ -46,7 +46,7 @@ export class IndexDbService {
         this.AddHeroTransaction(hero, 'add');
       }
       this.InsertIntoHeroTable(hero);
-    })
+    });
   }
 
   public UpdateHero(hero: Hero, isOnline: boolean) {
@@ -63,27 +63,27 @@ export class IndexDbService {
     this.DeleteFromHeroTable(hero);
   }
 
-  public InitializeIndexDB (heroes: Observable<Hero[]>) {
+  public InitializeIndexDB(heroes: Observable<Hero[]>) {
 
     console.log('creating Hero DB');
-    let db_name = "hero_database"
-    this.db = new Dexie(db_name);
+    const dbNname = 'hero_database';
+    this.db = new Dexie(dbNname);
     this.CreateTables();
 
     this.db.open()
       .then(() => {
-        console.log('opened database ' + db_name)
+        console.log('opened database ' + dbNname);
         this.InitializeHeroTable(heroes);
       })
-      .catch(function (err) {
+      .catch(err => {
         console.error (err.stack || err);
       });
   }
 
   private CreateTables() {
     this.db.version(1).stores({
-      hero: "id,name",
-      hero_transaction: "++id"
+      hero: 'id,name',
+      hero_transaction: '++id'
     });
   }
 
@@ -91,7 +91,7 @@ export class IndexDbService {
     heroesObservable.subscribe(heroes => {
       console.log('populate heroes DB');
       this.ClearTables();
-      var i: number;
+      let i: number;
       for (i = 0; i < heroes.length; i++) {
         this.InsertIntoHeroTable(heroes[i]);
       }

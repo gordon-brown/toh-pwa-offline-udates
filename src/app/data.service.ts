@@ -23,10 +23,10 @@ export class DataService {
 
   constructor(
     private http: HttpClient,
-    private messageService: MessageService){}
+    private messageService: MessageService) {}
 
   /** GET heroes from the server */
-  getHeroes (): Observable<Hero[]> {
+  getHeroes(): Observable<Hero[]> {
     return this.http.get<Hero[]>(this.heroesUrl)
     .pipe(
       tap(_ => this.log('fetched heroes')),
@@ -35,7 +35,7 @@ export class DataService {
   }
 
   /** GET hero by id. Will 404 if id not found */
-  getHero (id: number): Observable<Hero> {
+  getHero(id: number): Observable<Hero> {
     const url = `${this.heroesUrl}/${id}`;
     return this.http.get<Hero>(url).pipe(
       tap(_ => this.log(`fetched hero id=${id}`)),
@@ -44,9 +44,10 @@ export class DataService {
   }
   /* GET heroes whose name contains search term */
   searchHeroes(term: string): Observable<Hero[]> {
-    if (!term.trim())
+    if (!term.trim()) {
       // if not search term, return empty hero array.
       return of([]);
+    }
 
     return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
       tap(_ => this.log(`found heroes matching "${term}"`)),
@@ -56,32 +57,32 @@ export class DataService {
 
    /** Save Methods */
    /** POST: add a new hero */
-   addHero (hero: Hero): Observable<Hero> {
+   addHero(hero: Hero): Observable<Hero> {
 
     return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions)
       .pipe(
         tap((newHero: Hero) => {
-          this.log(`added hero w/ id=${newHero.id}`)
+          this.log(`added hero w/ id=${newHero.id}`);
         }),
-        catchError(this.handleError<Hero>('addHero')))
+        catchError(this.handleError<Hero>('addHero')));
   }
 
   /** DELETE: delete the hero */
-  deleteHero (hero: Hero): Observable<Hero> {
+  deleteHero(hero: Hero): Observable<Hero> {
 
   return  this.http.delete<Hero>(`${this.heroesUrl}/${hero.id}`, this.httpOptions)
     .pipe(
       tap(_ => this.log(`deleted hero id=${hero.id}`)),
-      catchError(this.handleError<Hero>('deleteHero')))
+      catchError(this.handleError<Hero>('deleteHero')));
   }
 
   /** PUT: update the hero on the server */
-  updateHero (hero: Hero): Observable<any> {
+  updateHero(hero: Hero): Observable<any> {
 
     return this.http.put(this.heroesUrl, hero, this.httpOptions)
       .pipe(
         tap(_ => this.log(`updated hero id=${hero.id}`)),
-        catchError(this.handleError<any>('updateHero')))
+        catchError(this.handleError<any>('updateHero')));
   }
 
   /**
@@ -90,7 +91,7 @@ export class DataService {
    * @param operation - name of the operation that failed
    * @param result - optional value to return as the observable result
    */
-  private handleError<T> (operation = 'operation', result?: T) {
+  private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
 
       // TODO: send the error to remote logging infrastructure
