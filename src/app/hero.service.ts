@@ -76,14 +76,13 @@ export class HeroService {
       of(hero);
   }
 
-
   private registerToEvents(offlineService: OfflineService) {
     offlineService.connectionChanged.subscribe(online => {
       if (online) {
         console.log('went online, sending all stored items');
         this.sendItemsFromIndexedDb();
       } else {
-        console.log('went offline, storing in indexdb');
+        console.log('went offline, storing in IndexDB');
       }
     });
   }
@@ -92,39 +91,27 @@ export class HeroService {
 
     console.log('Sending items from IndexDB');
 
-    await this.IndexDbService.GetHeroTransctions('hero_add').then(heroes =>
-      {
-        heroes.forEach(hero => {
-          this.DatabaseService.addHero(hero).subscribe(() => {
-            console.log('Added ' + JSON.stringify(hero));
-            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_add');
-          });
-        })
+    var transactions = await this.IndexDbService.GetHeroTransctions();
+    transactions.forEach(transaction => {
+      if (transaction.type === 'add'){
+        this.DatabaseService.addHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
+          console.log('Added ' + JSON.stringify(transaction));
+        });
       }
-    )
-
-    await this.IndexDbService.GetHeroTransctions('hero_update').then(heroes =>
-      {
-        heroes.forEach(hero => {
-          this.DatabaseService.updateHero(hero).subscribe(() => {
-            console.log('Updated ' + JSON.stringify(hero));
-            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_update');
-          });
-       })
+      else if (transaction.type === 'update'){
+        this.DatabaseService.updateHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
+          console.log('Updated ' + JSON.stringify(transaction));
+        });
       }
-     );
-
-    await this.IndexDbService.GetHeroTransctions('hero_delete').then(heroes =>
-      {
-        heroes.forEach(hero => {
-          this.DatabaseService.deleteHero(hero).subscribe(() => {
-            console.log('Deleted ' + JSON.stringify(hero));
-            this.IndexDbService.DeleteFromHeroTransactionTable(hero, 'hero_delete');
-          });
-        })
+      else if (transaction.type === 'delete') {
+        this.DatabaseService.deleteHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
+          console.log('Deleted ' + JSON.stringify(transaction));
+        });
       }
-     );
-
-  }
-
+      else {
+        throw "invalid transaction type in sendItemsFromIndexDb: " + transaction.type;
+      }
+      this.IndexDbService.DeleteFromHeroTransactionTable(transaction.id);
+    }
+  )}
 }

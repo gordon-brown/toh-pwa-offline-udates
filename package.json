@@ -10,7 +10,7 @@
     "build": "ng build --prod --source-map",
     "e2e": "ng e2e",
     "ng": "ng",
-    "server": "http-server dist --port 8080"
+    "serve": "http-server dist --port 8080"
   },
   "keywords": [],
   "author": "",

@@ -41,24 +41,24 @@ export class IndexDbService {
 
   public AddHero(hero: Hero, isOnline: boolean) {
     this.db.hero.orderBy('id').last().then(o => {
+      hero.id = o.id + 1;
       if (!isOnline) {
-        hero.id = o.id + 1;
-        this.InsertIntoHeroTransactionTable(hero, 'hero_add');
+        this.AddHeroTransaction(hero, 'add');
       }
       this.InsertIntoHeroTable(hero);
-    });
+    })
   }
 
   public UpdateHero(hero: Hero, isOnline: boolean) {
     if (!isOnline) {
-      this.InsertIntoHeroTransactionTable(hero, 'hero_update');
+      this.AddHeroTransaction(hero, 'update');
     }
     this.UpdateFromHeroTable(hero);
   }
 
   public DeleteHero(hero: Hero, isOnline: boolean) {
     if (!isOnline) {
-      this.InsertIntoHeroTransactionTable(hero, 'hero_delete');
+      this.AddHeroTransaction(hero, 'delete');
     }
     this.DeleteFromHeroTable(hero);
   }
@@ -83,9 +83,7 @@ export class IndexDbService {
   private CreateTables() {
     this.db.version(1).stores({
       hero: "id,name",
-      hero_add: "id",
-      hero_update: "id",
-      hero_delete: "id"
+      hero_transaction: "++id"
     });
   }
 
@@ -102,54 +100,52 @@ export class IndexDbService {
 
   private ClearTables() {
     this.db.hero.clear();
-    this.db.hero_add.clear();
-    this.db.hero_update.clear();
-    this.db.hero_delete.clear();
+    this.db.hero_transaction.clear();
   }
 
   public InsertIntoHeroTable(hero: Hero) {
-    this.db.table('hero').add({id: hero.id, name: hero.name})
+    this.db.hero.add({id: hero.id, name: hero.name})
       .catch(e => {
         console.error('Insert Into Heroes Error: ' + (e.stack || e));
     });
   }
 
   public UpdateFromHeroTable(hero: Hero) {
-    this.db.table('hero').update(hero.id, {name: hero.name})
+    this.db.hero.update(hero.id, {name: hero.name})
     .catch(e => {
       console.error('Update Into Heroes Error: ' + (e.stack || e));
     });
   }
 
   public DeleteFromHeroTable(hero: Hero) {
-    this.db.table('hero').where('id').equals(hero.id).delete()
+    this.db.hero.where('id').equals(hero.id).delete()
       .catch(e => {
         console.error('Delete from Heroes Error: ' + (e.stack || e));
     });
   }
 
-  public InsertIntoHeroTransactionTable(hero: Hero, tableName: string) {
-    this.db.table(tableName).add({id: hero.id, name: hero.name})
+  public AddHeroTransaction(hero: Hero, transactionType: string) {
+    this.db.hero_transaction.add({hero_id: hero.id, name: hero.name, type: transactionType})
       .then(() => {
-        console.log('Table ' + tableName + ' ' + hero.name);
+        console.log('Table hero_transaction ' + transactionType + ' ' + hero.name);
       })
       .catch(e => {
-        console.error('Insert Into ' + tableName + 'Error:' + (e.stack || e));
+        console.error('Insert Into hero_transaction ' + 'Error:' + (e.stack || e));
     });
   }
 
-  public DeleteFromHeroTransactionTable(hero: Hero, tableName: string) {
-    this.db.table(tableName).delete(hero.id)
+  public DeleteFromHeroTransactionTable(id: number) {
+    this.db.hero_transaction.delete(id)
       .then(() => {
-        console.log('Deleted from Table ' + tableName + ' ' + hero.name);
+        console.log('Deleted from hero_transaction ' + ' ' + id);
       })
       .catch(e => {
-        console.error('Delete from ' + tableName + 'Error:' + (e.stack || e));
+        console.error('Delete from hero_transaction ' + 'Error:' + (e.stack || e));
     });
   }
 
-  public async GetHeroTransctions(tableName: string) {
-    return await this.db.table(tableName).toArray();
+  public GetHeroTransctions() {
+    return this.db.hero_transaction.toArray();
   }
 
 }
