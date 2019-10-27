@@ -83,7 +83,7 @@ export class IndexDbService {
   private CreateTables() {
     this.db.version(1).stores({
       hero: 'id,name',
-      hero_transaction: '++id'
+      hero_transaction: '++id,hero_id'
     });
   }
 
@@ -146,6 +146,13 @@ export class IndexDbService {
 
   public GetHeroTransctions() {
     return this.db.hero_transaction.toArray();
+  }
+
+  public async UpdateNewHeroId(oldHeroId: number, newHeroId: number) {
+    console.log('Started Sync IDs');
+    await this.db.hero_transaction.where('hero_id').equals(oldHeroId).modify({new_hero_id: newHeroId})
+      .then(res => console.log('Sync IDs ' + JSON.stringify(res))
+    );
   }
 
 }
