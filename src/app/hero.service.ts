@@ -92,14 +92,10 @@ export class HeroService {
     console.log('Sending items from IndexDB');
 
     concat(of(...(await this.indexDbService.GetHeroTransctions())))
-      .subscribe(t => this.wrapper(t));
+      .subscribe(async t => await this.processTransaction(t));
   }
 
-  private async wrapper(transaction) {
-    await this.processTransaction(transaction);
-  }
-
-  private async processTransaction(transaction) {
+   private async processTransaction(transaction) {
     if (transaction.type === 'add') {
       await Promise.all([
         this.databaseService.addHero({ id: transaction.hero_id, name: transaction.name }).pipe(first()).toPromise(),
