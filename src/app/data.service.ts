@@ -59,6 +59,8 @@ export class DataService {
    /** POST: add a new hero */
    addHero(hero: Hero): Observable<Hero> {
 
+    console.log('addHero ' + JSON.stringify(hero));
+
     return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions)
       .pipe(
         tap((newHero: Hero) => {
@@ -67,8 +69,21 @@ export class DataService {
         catchError(this.handleError<Hero>('addHero')));
   }
 
+  /** PUT: update the hero on the server */
+  updateHero(hero: Hero): Observable<any> {
+
+    console.log('updateHero ' + JSON.stringify(hero));
+
+    return this.http.put(this.heroesUrl, hero, this.httpOptions)
+      .pipe(
+        tap(_ => this.log(`updated hero id=${hero.id}`)),
+        catchError(this.handleError<any>('updateHero')));
+  }
+
   /** DELETE: delete the hero */
   deleteHero(hero: Hero): Observable<Hero> {
+
+  console.log('deleteHero ' + JSON.stringify(hero));
 
   return  this.http.delete<Hero>(`${this.heroesUrl}/${hero.id}`, this.httpOptions)
     .pipe(
@@ -76,14 +91,6 @@ export class DataService {
       catchError(this.handleError<Hero>('deleteHero')));
   }
 
-  /** PUT: update the hero on the server */
-  updateHero(hero: Hero): Observable<any> {
-
-    return this.http.put(this.heroesUrl, hero, this.httpOptions)
-      .pipe(
-        tap(_ => this.log(`updated hero id=${hero.id}`)),
-        catchError(this.handleError<any>('updateHero')));
-  }
 
   /**
    * Handle Http operation that failed.

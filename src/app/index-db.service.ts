@@ -134,17 +134,12 @@ export class IndexDbService {
     });
   }
 
-  public DeleteFromHeroTransactionTable(id: number) {
-    this.db.hero_transaction.delete(id)
-      .then(() => {
-        console.log('Deleted from hero_transaction ' + ' ' + id);
-      })
-      .catch(e => {
-        console.error('Delete from hero_transaction ' + 'Error:' + (e.stack || e));
-    });
+  public DeleteFromHeroTransactionTable(id: number): Promise<any> {
+    console.log('deleting from hero trans ' + id);
+    return this.db.hero_transaction.delete(id);
   }
 
-  public GetHeroTransctions() {
+  public async GetHeroTransctions() {
     return this.db.hero_transaction.toArray();
   }
 

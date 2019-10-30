@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, from } from 'rxjs';
+import { concat, Observable, of, from } from 'rxjs';
+import { first } from 'rxjs/operators';
 
 import { Hero } from './hero';
 import { DataService } from './data.service';
@@ -90,22 +91,31 @@ export class HeroService {
 
     console.log('Sending items from IndexDB');
 
-    const transactions = await this.indexDbService.GetHeroTransctions();
-    transactions.forEach(transaction => {
-      if (transaction.type === 'add') {
-        this.databaseService.addHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
-          console.log('Added ' + JSON.stringify(transaction));
-        });
-      } else if (transaction.type === 'update') {
-        this.databaseService.updateHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
-          console.log('Updated ' + JSON.stringify(transaction));
-        });
-      } else if (transaction.type === 'delete') {
-        this.databaseService.deleteHero({ id: transaction.hero_id, name: transaction.name }).subscribe(() => {
-          console.log('Deleted ' + JSON.stringify(transaction));
-        });
-      }
-      this.indexDbService.DeleteFromHeroTransactionTable(transaction.id);
+    concat(of(...(await this.indexDbService.GetHeroTransctions())))
+      .subscribe(t => this.wrapper(t));
+  }
+
+  private async wrapper(transaction) {
+    await this.processTransaction(transaction);
+  }
+
+  private async processTransaction(transaction) {
+    if (transaction.type === 'add') {
+      await Promise.all([
+        this.databaseService.addHero({ id: transaction.hero_id, name: transaction.name }).pipe(first()).toPromise(),
+        this.indexDbService.DeleteFromHeroTransactionTable(transaction.id) ]
+      );
+    } else if (transaction.type === 'update') {
+      await Promise.all([
+        this.databaseService.updateHero({ id: transaction.hero_id, name: transaction.name }).pipe(first()).toPromise(),
+        this.indexDbService.DeleteFromHeroTransactionTable(transaction.id) ]
+      );
+    } else if (transaction.type === 'delete') {
+      await Promise.all([
+        this.databaseService.updateHero({ id: transaction.hero_id, name: transaction.name }).pipe(first()).toPromise(),
+        this.indexDbService.DeleteFromHeroTransactionTable(transaction.id) ]
+      );
     }
-  ); }
+  }
+
 }
