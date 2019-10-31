@@ -130,7 +130,7 @@ export class IndexDbService {
         console.log('Table hero_transaction ' + transactionType + ' ' + hero.name);
       })
       .catch(e => {
-        console.error('Insert Into hero_transaction ' + 'Error:' + (e.stack || e));
+        console.error('Insert Into hero_transaction Error:' + (e.stack || e));
     });
   }
 
@@ -143,9 +143,9 @@ export class IndexDbService {
     return this.db.hero_transaction.toArray();
   }
 
-  public async UpdateNewHeroId(oldHeroId: number, newHeroId: number) {
-    console.log('Started Sync IDs');
-    await this.db.hero_transaction.where('hero_id').equals(oldHeroId).modify({new_hero_id: newHeroId})
+  public UpdateNewHeroId(oldHeroId: number, newHeroId: number): Promise<any> {
+    console.log('Started Sync IDs ' + oldHeroId + ' to ' + newHeroId);
+    return this.db.hero_transaction.where('hero_id').equals(oldHeroId).modify({new_hero_id: newHeroId})
       .then(res => console.log('Sync IDs ' + JSON.stringify(res))
     );
   }
