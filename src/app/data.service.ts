@@ -12,8 +12,8 @@ import { MessageService } from './message.service';
 })
 export class DataService {
 
-  private heroesUrl = 'api/heroes';  // for use with in--dataservice
-  // private heroesUrl = 'http://localhost:5000/api/heroes';  // for REST api
+  // private heroesUrl = 'api/heroes';  // for use with in--dataservice
+  private heroesUrl = 'http://localhost:5000/api/heroes';  // for REST api
 
   heroes: Hero[];
 
@@ -74,8 +74,9 @@ export class DataService {
 
     console.log('updateHero ' + JSON.stringify(hero));
 
-    return this.http.put(this.heroesUrl, hero, this.httpOptions)
-      .pipe(
+    // return this.http.put(this.heroesUrl, hero, this.httpOptions)
+    return this.http.put(`${this.heroesUrl}/${hero.id}`, hero, this.httpOptions)
+    .pipe(
         tap(_ => this.log(`updated hero id=${hero.id}`)),
         catchError(this.handleError<any>('updateHero')));
   }

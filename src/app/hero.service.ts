@@ -98,12 +98,51 @@ export class HeroService {
       concatMap(t => of(this.SendAddHero(t))))
     .subscribe();
 
+    this.waitTwoSeconds(transactions);
+
+  }
+
+  private async SendUpdateDeletes(transactions) {
+    of(...transactions)
+      .pipe(
+        filter(t => t.type === 'update'), tap(t => console.log(JSON.stringify(t))),
+        concatMap(t => of(this.SendUpdateHero(t))))
+      .subscribe();
+
+    of(...transactions)
+    .pipe(
+      filter(t => t.type === 'delete'), tap(t => console.log(JSON.stringify(t))),
+      concatMap(t => of(this.SendDeleteHero(t))))
+    .subscribe();
+  }
+
+  private waitTwoSeconds(transactions) {
+    setTimeout(
+      () => this.SendUpdateDeletes(transactions),
+      2000
+    );
   }
 
   private SendAddHero(transaction) {
     return this.databaseService.addHero({ id: transaction.hero_id, name: transaction.name })
       .pipe(
         concatMap(hero => this.indexDbService.UpdateNewHeroId(transaction.hero_id, hero.id)),
+        concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id))))
+      .subscribe();
+  }
+
+  private SendUpdateHero(transaction) {
+    const heroId = transaction.new_id !== null ? transaction.new_id : transaction.id;
+    return this.databaseService.updateHero({ id: heroId, name: transaction.name })
+      .pipe(
+        concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id))))
+      .subscribe();
+  }
+
+  private SendDeleteHero(transaction) {
+    const heroId = transaction.new_id !== null ? transaction.new_id : transaction.id;
+    return this.databaseService.deleteHero({ id: heroId, name: transaction.name })
+      .pipe(
         concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id))))
       .subscribe();
   }
