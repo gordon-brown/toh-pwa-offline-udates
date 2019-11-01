@@ -15,15 +15,15 @@ export class HeroService {
     private indexDbService: IndexDbService,
     private databaseService: DataService) {
     this.registerToEvents(offlineService);
-    this.indexDbService.InitializeIndexDB(this.getHeroes());
+    this.indexDbService.InitializeIndexDB();
   }
 
   /** get heroes */
   public getHeroes(): Observable<Hero[]> {
-    return (this.offlineService.isOnline) ?
-      this.databaseService.getHeroes()
-      :
-      from(this.indexDbService.getHeroes());
+    if (this.offlineService.isOnline) {
+      this.indexDbService.InitializeHeroTable(this.databaseService.getHeroes());
+    }
+    return from(this.indexDbService.getHeroes());
   }
 
   /** get hero by id */
@@ -98,11 +98,12 @@ export class HeroService {
       concatMap(t => of(this.SendAddHero(t))))
     .subscribe();
 
-    this.waitTwoSeconds(transactions);
+    this.waitTwoSeconds();
 
   }
 
-  private async SendUpdateDeletes(transactions) {
+  private async SendUpdateDeletes() {
+    const transactions = await this.indexDbService.GetHeroTransctions();
     of(...transactions)
       .pipe(
         filter(t => t.type === 'update'), tap(t => console.log(JSON.stringify(t))),
@@ -116,9 +117,9 @@ export class HeroService {
     .subscribe();
   }
 
-  private waitTwoSeconds(transactions) {
+  private waitTwoSeconds() {
     setTimeout(
-      () => this.SendUpdateDeletes(transactions),
+      () => this.SendUpdateDeletes(),
       2000
     );
   }
@@ -127,12 +128,13 @@ export class HeroService {
     return this.databaseService.addHero({ id: transaction.hero_id, name: transaction.name })
       .pipe(
         concatMap(hero => this.indexDbService.UpdateNewHeroId(transaction.hero_id, hero.id)),
-        concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id))))
+        concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id)))
+        )
       .subscribe();
   }
 
   private SendUpdateHero(transaction) {
-    const heroId = transaction.new_id !== null ? transaction.new_id : transaction.id;
+    const heroId = (typeof transaction.new_hero_id === 'undefined') ? transaction.hero_id : transaction.new_hero_id;
     return this.databaseService.updateHero({ id: heroId, name: transaction.name })
       .pipe(
         concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id))))
@@ -140,7 +142,7 @@ export class HeroService {
   }
 
   private SendDeleteHero(transaction) {
-    const heroId = transaction.new_id !== null ? transaction.new_id : transaction.id;
+    const heroId = (typeof transaction.new_hero_id === 'undefined') ? transaction.hero_id : transaction.new_hero_id;
     return this.databaseService.deleteHero({ id: heroId, name: transaction.name })
       .pipe(
         concatMap(() => from(this.indexDbService.DeleteFromHeroTransactionTable(transaction.id))))
