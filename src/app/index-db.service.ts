@@ -63,7 +63,7 @@ export class IndexDbService {
     this.DeleteFromHeroTable(hero);
   }
 
-  public InitializeIndexDB(heroes: Observable<Hero[]>) {
+  public InitializeIndexDB() {
 
     console.log('creating Hero DB');
     const dbNname = 'hero_database';
@@ -73,7 +73,6 @@ export class IndexDbService {
     this.db.open()
       .then(() => {
         console.log('opened database ' + dbNname);
-        this.InitializeHeroTable(heroes);
       })
       .catch(err => {
         console.error (err.stack || err);
@@ -87,7 +86,7 @@ export class IndexDbService {
     });
   }
 
-  private InitializeHeroTable(heroesObservable: Observable<Hero[]>) {
+  public InitializeHeroTable(heroesObservable: Observable<Hero[]>) {
     heroesObservable.subscribe(heroes => {
       console.log('populate heroes DB');
       this.ClearTables();
@@ -146,7 +145,7 @@ export class IndexDbService {
   public UpdateNewHeroId(oldHeroId: number, newHeroId: number): Promise<any> {
     console.log('Started Sync IDs ' + oldHeroId + ' to ' + newHeroId);
     return this.db.hero_transaction.where('hero_id').equals(oldHeroId).modify({new_hero_id: newHeroId})
-      .then(res => console.log('Sync IDs ' + JSON.stringify(res))
+      .then(res => console.log('# records synced ' + JSON.stringify(res))
     );
   }
 
