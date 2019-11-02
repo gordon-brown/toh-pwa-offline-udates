@@ -10,7 +10,9 @@
     "build": "ng build --prod --source-map",
     "e2e": "ng e2e",
     "ng": "ng",
-    "serve": "http-server dist --port 8080"
+    "serve": "http-server dist --port 8080",
+    "build-api": "dotnet build rest-api/dotnet-tour-of-heroes.csproj",
+    "start-api": "dotnet run --project rest-api --framework netcoreapp2.1"
   },
   "keywords": [],
   "author": "",
