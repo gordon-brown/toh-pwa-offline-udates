@@ -90,15 +90,15 @@ export class HeroService {
 
     console.log('Sending items from IndexDB');
 
-    const newIds = {};
+    const newHeroIds = {};
     for (const transaction of await this.indexDbService.GetHeroTransctions()) {
       if (transaction.type === 'add') {
         const hero = await this.databaseService.addHero({ id: null, name: transaction.name }).toPromise();
-        newIds[transaction.hero_id] = hero.id;
+        newHeroIds[transaction.hero_id] = hero.id;
       } else if (transaction.type === 'update') {
-        await this.databaseService.updateHero({ id: this.getHeroID(newIds, transaction.hero_id), name: transaction.name }).toPromise();
+        await this.databaseService.updateHero({ id: this.getHeroID(newHeroIds, transaction.hero_id), name: transaction.name }).toPromise();
       } else if (transaction.type === 'delete') {
-        await this.databaseService.deleteHero({ id: this.getHeroID(newIds, transaction.hero_id), name: transaction.name }).toPromise();
+        await this.databaseService.deleteHero({ id: this.getHeroID(newHeroIds, transaction.hero_id), name: transaction.name }).toPromise();
       }
       await this.indexDbService.DeleteFromHeroTransactionTable(transaction.id);
     }
