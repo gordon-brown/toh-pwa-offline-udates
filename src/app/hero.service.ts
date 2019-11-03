@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, from } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 import { Hero } from './hero';
 import { DataService } from './data.service';
@@ -49,8 +50,10 @@ export class HeroService {
 
     return (this.offlineService.isOnline) ?
       this.databaseService.addHero(hero)
+        .pipe(
+          tap((newHero: Hero) => { this.indexDbService.UpdateNewHeroId(hero.id, newHero.id); }))
       :
-      of(hero);
+        of(hero);
   }
 
   /** update the hero */
