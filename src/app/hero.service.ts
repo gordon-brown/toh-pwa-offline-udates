@@ -91,24 +91,29 @@ export class HeroService {
 
   private async sendItemsFromIndexedDb() {
 
-    console.log('Sending items from IndexDB');
+    try {
+      console.log('Sending items from IndexDB');
 
-    const newHeroIds = {};
-    for (const transaction of await this.indexDbService.GetHeroTransctions()) {
-      if (transaction.type === 'add') {
-        const hero = await this.databaseService.addHero({ id: null, name: transaction.name }).toPromise();
-        newHeroIds[transaction.hero_id] = hero.id;
-      } else if (transaction.type === 'update') {
-        await this.databaseService.updateHero({ id: this.getHeroID(newHeroIds, transaction.hero_id), name: transaction.name }).toPromise();
-      } else if (transaction.type === 'delete') {
-        await this.databaseService.deleteHero({ id: this.getHeroID(newHeroIds, transaction.hero_id), name: transaction.name }).toPromise();
+      const newHeroIds = {};
+      for (const transaction of await this.indexDbService.GetHeroTransctions()) {
+        if (transaction.type === 'add') {
+          const hero = await this.databaseService.addHero({ id: null, name: transaction.name }).toPromise();
+          newHeroIds[transaction.hero_id] = hero.id;
+        } else if (transaction.type === 'update') {
+          await this.databaseService.updateHero({ id: getHeroID(newHeroIds, transaction.hero_id), name: transaction.name }).toPromise();
+        } else if (transaction.type === 'delete') {
+          await this.databaseService.deleteHero({ id: getHeroID(newHeroIds, transaction.hero_id), name: transaction.name }).toPromise();
+        }
+        await this.indexDbService.DeleteFromHeroTransactionTable(transaction.id);
       }
-      await this.indexDbService.DeleteFromHeroTransactionTable(transaction.id);
+    } catch (error) {
+      console.error('SendItemsFromIndexDb Error: ' + (error.stack || error));
     }
-  }
 
-  private getHeroID(newIds: {}, oldHeroId: number) {
-    return newIds[oldHeroId] || oldHeroId;
+    function getHeroID(newIds: {}, oldHeroId: number) {
+      return newIds[oldHeroId] || oldHeroId;
+    }
+
   }
 
 }
