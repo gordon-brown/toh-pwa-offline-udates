@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, from } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
-import { Hero } from './hero';
+import { Hero } from '../hero';
 import { DataService } from './data.service';
 import { IndexDbService } from './index-db.service';
 import { OfflineService } from './offline.service';
