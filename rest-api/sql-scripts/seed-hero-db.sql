@@ -20,4 +20,7 @@ N'[
 insert into Hero(name)
 select name
 from openjson(@heroes) with (name nvarchar(40));
+
+SELECT *
+FROM Hero
 GO

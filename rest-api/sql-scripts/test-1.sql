@@ -1,4 +1,6 @@
 INSERT INTO HeroDb.dbo.Hero VALUES ('Judy')
+INSERT INTO HeroDb.dbo.Hero VALUES ('Cathy')
+INSERT INTO HeroDb.dbo.Hero VALUES ('Laurie')
 
 DELETE FROM HeroDb.dbo.Hero WHERE ID = 3
 
