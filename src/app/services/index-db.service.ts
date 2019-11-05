@@ -86,15 +86,12 @@ export class IndexDbService {
     });
   }
 
-  public InitializeHeroTable(heroesObservable: Observable<Hero[]>) {
-    heroesObservable.subscribe(heroes => {
-      console.log('populate heroes DB');
-      this.ClearTables();
-      let i: number;
-      for (i = 0; i < heroes.length; i++) {
-        this.InsertIntoHeroTable(heroes[i]);
-      }
-    });
+  public async PopulateHeroTable(heroes: Hero[]) {
+    console.log('populate hero table');
+    this.ClearTables();
+    for (const hero of heroes) {
+      this.InsertIntoHeroTable(hero);
+    }
   }
 
   private ClearTables() {
@@ -102,8 +99,8 @@ export class IndexDbService {
     this.db.hero_transaction.clear();
   }
 
-  public InsertIntoHeroTable(hero: Hero) {
-    this.db.hero.add({id: hero.id, name: hero.name})
+  public async InsertIntoHeroTable(hero: Hero) {
+    await this.db.hero.add({id: hero.id, name: hero.name})
       .catch(e => {
         console.error('Insert Into Heroes Error: ' + (e.stack || e));
     });

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, from } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, of, from, Subject } from 'rxjs';
+import { tap, flatMap } from 'rxjs/operators';
 
 import { Hero } from '../hero';
 import { DataService } from './data.service';
@@ -9,6 +9,10 @@ import { OfflineService } from './offline.service';
 
 @Injectable({ providedIn: 'root' })
 export class HeroService {
+
+  private databaseSyncedSource = new Subject();
+
+  databaseSynced = this.databaseSyncedSource.asObservable();
 
   constructor(
     private readonly offlineService: OfflineService,
@@ -20,10 +24,18 @@ export class HeroService {
 
   /** get heroes */
   public getHeroes(): Observable<Hero[]> {
-    if (this.offlineService.isOnline) {
-      this.indexDbService.InitializeHeroTable(this.databaseService.getHeroes());
-    }
-    return from(this.indexDbService.getHeroes());
+    console.log('getHeroes offline status ' + this.offlineService.isOnline);
+    return (this.offlineService.isOnline) ?
+      this.databaseService.getHeroes()
+      .pipe(
+        tap((heroes => this.indexDbService.PopulateHeroTable(heroes))))
+    :
+      from(this.indexDbService.getHeroes());
+  }
+
+  private async InitHeroTableWithAwait() {
+    const heroes = await this.databaseService.getHeroes().toPromise();
+    this.indexDbService.PopulateHeroTable(heroes);
   }
 
   /** get hero by id */
@@ -106,6 +118,7 @@ export class HeroService {
         }
         await this.indexDbService.DeleteFromHeroTransactionTable(transaction.id);
       }
+      this.databaseSyncedSource.next();
     } catch (error) {
       console.error('SendItemsFromIndexDb Error: ' + (error.stack || error));
     }
