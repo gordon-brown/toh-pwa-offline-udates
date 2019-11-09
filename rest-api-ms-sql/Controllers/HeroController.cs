@@ -20,7 +20,7 @@ namespace AngularHeroApp.Controllers
             this.SqlPipe = sqlPipe;
         }
 
-        // GET: app/heroes[?name=<<name>>]
+        // GET: api/heroes[?name=<<name>>]
         [HttpGet]
         public async Task Get(string name)
         {
@@ -34,14 +34,14 @@ namespace AngularHeroApp.Controllers
             }
         }
 
-        // GET app/heroes/5
+        // GET api/heroes/5
         [HttpGet("{id}")]
         public async Task Get(int id)
         {
             await SqlPipe.Stream("select * from Hero where id = "+ id +" FOR JSON PATH, WITHOUT_ARRAY_WRAPPER", Response.Body, "{}");
         }
 
-        // POST app/heroes
+        // POST api/heroes
         [HttpPost]
         public async Task Post()
         {
@@ -51,7 +51,7 @@ namespace AngularHeroApp.Controllers
             await SqlPipe.Stream(cmd,Response.Body,"{}");
         }
 
-        // PUT app/heroes/5
+        // PUT api/heroes/5
         [HttpPut("{id}")]
         public async Task Put()
         {
@@ -65,7 +65,7 @@ where Hero.id = json.id");
             await SqlCommand.ExecuteNonQuery(cmd);
         }
 
-        // DELETE app/heroes/5
+        // DELETE api/heroes/5
         [HttpDelete("{id}")]
         public async Task Delete(int id)
         {

@@ -11,8 +11,10 @@
     "e2e": "ng e2e",
     "ng": "ng",
     "serve": "http-server dist --port 8080",
-    "build-api": "dotnet build rest-api/dotnet-tour-of-heroes.csproj",
-    "start-api": "dotnet run --project rest-api --framework netcoreapp2.1"
+    "build-api": "dotnet build rest-api-ms-sql/rest-api-ms-sql.csproj",
+    "start-api": "dotnet run --project rest-api-ms-sql --framework netcoreapp2.1",
+    "build-api-postgresql": "dotnet build rest-api-postgre-sql/rest-api-postgre-sql.csproj",
+    "start-api-postgresql": "dotnet run --project rest-api-postgre-sql --framework netcoreapp2.1"
   },
   "keywords": [],
   "author": "",

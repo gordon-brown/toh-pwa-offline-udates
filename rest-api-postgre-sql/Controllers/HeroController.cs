@@ -20,7 +20,7 @@ namespace AngularHeroApp.Controllers
             this.SqlPipe = sqlPipe;
         }
 
-        // GET: ap1/heroes[?name=<<name>>]
+        // GET: api/heroes[?name=<<name>>]
         [HttpGet]
         public async Task Get(string name)
         {
@@ -34,7 +34,7 @@ namespace AngularHeroApp.Controllers
             }
         }
 
-        // GET ap1/heroes/5
+        // GET api/heroes/5
         [HttpGet("{id}")]
         public async Task Get(int id)
         {
@@ -51,7 +51,7 @@ namespace AngularHeroApp.Controllers
             await SqlPipe.Stream(cmd,Response.Body,"{}");
         }
 
-        // PUT ap1/heroes/5
+        // PUT api/heroes/5
         [HttpPut("{id}")]
         public async Task Put()
         {
