@@ -15,20 +15,28 @@ HeroService - This does the Sychronization when we go online. It also delegates 
 IndexDbService - Updates the indexDb tables
 DataService - Updates the database which could be in memory
 
-## To run this project
+## To run this project using in memory database
 
 Start the Service
 
 Run the following npm tasks in package.json
 
 build-api - builds the api
-start-api - starts the api. You can test via browser or postman
+start-api - starts the api. You can test via browser or postman. (F5 will sorta work, but is not fully compatible with chrome dev tools)
 
-You likely will need to change the connection string and maybe port numbers. This requires a SQK database, You can change to use in memory data if you like. Keep this running.
+You may need to append "index" to the browser url.
 
-Start the Application
+## to run this project with the REST api
+
+Make changes to data.services.cs and app.module.cs to turn off in memory database and use new url (see comments in files)
+Create your SQL database and hero table
+Change the connection string as appropriate
 
 Run the following npm tasks in package.json
 
 build - creates the application with a source map for debugging
-serve - starts the application. You may need to append the browser location to start at index.
+serve - starts the application.
+
+check to make sure it is working using browser or postman
+
+run the project as above. Keep the api service running.
