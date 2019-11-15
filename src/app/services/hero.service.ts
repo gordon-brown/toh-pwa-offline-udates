@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, from, Subject } from 'rxjs';
-import { tap, flatMap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
 import { Hero } from '../hero';
 import { DataService } from './data.service';

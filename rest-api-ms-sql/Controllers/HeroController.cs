@@ -24,10 +24,9 @@ namespace AngularHeroApp.Controllers
         [HttpGet]
         public async Task Get(string name)
         {
-            if(string.IsNullOrEmpty(name))
+            if(string.IsNullOrEmpty(name)) {
                 await SqlPipe.Stream("select * from Hero for json path", Response.Body, "[]");
-            else
-            {
+            } else {
                 var cmd = new SqlCommand(@"select * from Hero where name like @name for json path");
                 cmd.Parameters.AddWithValue("name", "%"+name+"%");
                 await SqlPipe.Stream(cmd, Response.Body, "[]");
