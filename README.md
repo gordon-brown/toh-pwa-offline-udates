@@ -21,12 +21,12 @@ Start the Service
 
 Run the following npm tasks in package.json
 
-build-api - builds the api
-start-api - starts the api. You can test via browser or postman. (F5 will sorta work, but is not fully compatible with chrome dev tools)
+build-api - builds the api.
+start-api - starts the api. You can test via browser or postman. (F5 will sorta work, but is not fully compatible with chrome dev tools).
 
 You may need to append "index" to the browser url.
 
-## to run this project with the REST api
+## To run this project with the REST api
 
 Make changes to data.services.cs and app.module.cs to turn off in memory database and use new url (see comments in files)
 Create your SQL database and hero table
@@ -34,7 +34,7 @@ Change the connection string as appropriate
 
 Run the following npm tasks in package.json
 
-build - creates the application with a source map for debugging
+build - creates the application with a source map for debugging.
 serve - starts the application.
 
 check to make sure it is working using browser or postman
