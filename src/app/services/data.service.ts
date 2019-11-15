@@ -12,8 +12,8 @@ import { MessageService } from './message.service';
 })
 export class DataService {
 
-  // private heroesUrl = 'api/heroes';  // for use with in--dataservice
-  private heroesUrl = 'http://localhost:5000/api/heroes';  // for REST api
+  private heroesUrl = 'api/heroes';  // for use with in--dataservice
+  // private heroesUrl = 'http://localhost:5000/api/heroes';  // for REST api
 
   heroes: Hero[];
 
