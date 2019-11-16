@@ -9,9 +9,9 @@ You can find a number of posts on how to make your application into an applicati
 
 ## Offline Updates
 
-The offline transactions are more interesting. I couldn't find a lot of documentation on this which is why I beleive this might be useful to others. The basic approach is to use IndexDb. When we are connected we update the database. When we are not connected we update a transaction file instead. When the application goes back on-line these transactions are applied to the database. I have done this in a simple manner updating one transaction at a time. A better approach may be to send a JSON array to the server and update that usinig a cursor with a transaction wrapped around it so that it is atomic. There are now three services that handle updates
+The offline transactions are more interesting. I couldn't find a lot of documentation on this which is why I believe this might be useful to others. The basic approach is to use IndexDb. When we are connected we update the database. When we are not connected we update a transaction file instead. When the application goes back on-line these transactions are applied to the database. I have done this in a simple manner updating one transaction at a time. A better approach may be to send a JSON array to the server and update that using a cursor with a transaction wrapped around it so that it is atomic. There are now three services that handle updates
 
-HeroService - This does the Sychronization when we go online. It also delegates to the other two services depending on online/offline status.
+HeroService - This does the Synchronization when we go online. It also delegates to the other two services depending on online/offline status.
 IndexDbService - Updates the indexDb tables
 DataService - Updates the database which could be in memory
 
